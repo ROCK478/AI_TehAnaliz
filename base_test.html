@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Система отчетов</title>
+    <style>
+        table {border-collapse: collapse; width: 100%; margin: 10px 0;}
+        th, td {border: 1px solid #ccc; padding: 8px;}
+        th {background-color: #f5f5f5;}
+        .form, .controls {margin: 10px 0;}
+        input, select, button {padding: 5px; margin: 2px;}
+        .totals {font-weight: bold; padding: 5px; background: #f9f9f9}
+        .input-field{display: inline-block; margin: 5px 10px 5px 0;}
+    </style>
+</head>
+<body>
+{% macro csv_controls() %}
+<div class="controls">
+    <form method="post" enctype="multipart/form-data" style="display:inline">
+        <input type="file" name="file" accept=".csv">
+        <button>Загрузить CSV</button>
+    </form>
+</div>
+{% endmacro %}
+
+{% macro input_field(name, label, type="text", required=True, width="140px") %}
+<div class="input-field">
+    <label>{{ label }}:</label><br>
+    <input name="{{ name }}" type="{{ type }}"
+           value="{{ request.form.get(name, '') }}"
+           placeholder="{{ label }}"
+           style="width: {{ width }};"
+           {% if required %}required{% endif %}>
+</div>
+{% endmacro %}
+
+{% macro select_field(name, label, options, current="") %}
+<div class="input-field">
+    <label>{{ label }}:</label><br>
+    <select name="{{ name }}" style="width: 150px;">
+        <option value="">Все</option>
+        {% for opt in options %}
+        <option value="{{ opt }}"
+            {{ 'selected' if opt == request.form.get(name, "") or opt == current }}>
+            {{ opt }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+{% endmacro %}
+
+{% macro add_form(columns, categories, managers, goods) %}
+<form method="post">
+    <input type="hidden" name="action" value="add">
+
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0;">
+
+        {{ input_field("Услуга", "Услуга") }}
+        {{ select_field("Тип", "Тип услуги", categories) }}
+        {{ input_field("Часы", "Часы", "number") }}
+        {{ input_field("Дата", "Дата", "date") }}
+        {{ input_field("Цена", "Цена за час", "number") }}
+        {{ select_field("Фотограф", "Фотограф", photographers) }}
+
+        <div class="input-field">
+            <label>&nbsp;</label><br>
+            <button type="submit" style="height: 30px; padding: 0 20px;">
+                Добавить запись
+            </button>
+        </div>
+
+    </div>
+</form>
+
+<div style="margin: 10px 0;">
+    <form method="post">
+        <input type="hidden" name="action" value="add_category">
+        {{ input_field("new_category", "Новая категория", "text") }}
+        <button type="submit">Добавить категорию</button>
+    </form>
+</div>
+{% endmacro %}
+
+{% macro render_table(data, columns) %}
+<table>
+    <thead>
+        <tr>
+            {% for col in columns %}
+            <th>{{ col }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            {% for col in columns %}
+            <td>
+                {% if col|lower in ["сумма", "цена"] %}
+                    {{ row[col]|format_currency }}
+                {% else %}
+                    {{ row[col] }}
+                {% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endmacro %}
+
+{% macro totals_display(totals) %}
+<div class="totals">
+    {% for k, v in totals.items() %}
+        {{ k }}:
+        {% if k|lower == "сумма" %}
+            {{ v|format_currency }}
+        {% else %}
+            {{ v }}
+        {% endif %}
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro report_form(categories=[], managers=[], goods=[]) %}
+<h2>Форма отчета</h2>
+<form method="post">
+
+    {{ input_field("Дата_от", "Период от", "date", False, "160px") }}
+    {{ input_field("Дата_до", "Период до", "date", False, "160px") }}
+
+    {{ select_field("Фотограф", "Фотограф", photographers) }}
+    {{ select_field("Услуга", "Услуга", services) }}
+    {{ select_field("Тип", "Тип услуги", categories) }}
+
+    <div class="input-field">
+        <button type="submit" name="action" value="preview_report" style="height: 38px;">
+            Показать отчет
+        </button>
+    </div>
+
+    <div class="input-field">
+        <button type="submit" name="action" value="generate_report" style="height: 38px;">
+            Выгрузить отчет
+        </button>
+    </div>
+
+</form>
+{% endmacro %}
+
+{% macro photographers_table(stats) %}
+<h2>Аналитика по фотографам</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Фотограф</th>
+            <th>Выручка</th>
+            <th>План</th>
+            <th>% выполнения</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in stats %}
+        <tr>
+            <td>{{ row["Фотограф"] }}</td>
+            <td>{{ row["Выручка"]|format_currency }}</td>
+            <td>{{ row["План"]|format_currency }}</td>
+            <td>{{ row["Выполнение"] }}%</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endmacro %}
+{% block content %}{% endblock %}
+
+</body>
+</html>
