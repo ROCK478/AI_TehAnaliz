@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Прогноз {{ fc.ticker }} — ТехАнализ{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;align-items:center">
+        <h1 style="margin:0">{{ fc.ticker }} · {{ stock_name }}</h1>
+        <span class="badge badge--{{ fc.status }}">{{ fc.status_label }}</span>
+    </div>
+    <p class="muted">{{ period.label }} прогноз ({{ period.desc }}) ·
+       создан {{ fc.created_at.strftime('%d.%m.%Y %H:%M') }} ·
+       срок исполнения {{ fc.target_date.strftime('%d.%m.%Y') }}</p>
+
+    <div class="grid grid--3" style="margin-top:10px">
+        <div class="stat">
+            <div class="k">Ожидаемое изменение</div>
+            <div class="big-pct pct-{{ fc.direction }}">
+                {{ '%+.2f'|format(fc.predicted_change_pct) }}%
+            </div>
+        </div>
+        <div class="stat">
+            <div class="k">Вероятность сценария</div>
+            <div class="big-pct">{{ fc.probability }}%</div>
+        </div>
+        <div class="stat">
+            <div class="k">Цена на момент прогноза</div>
+            <div class="big-pct">{{ fc.price_at_forecast }} ₽</div>
+        </div>
+    </div>
+
+    {% if fc.status != 'awaiting' %}
+    <div class="flash flash--{{ 'success' if fc.status=='success' else 'error' }}">
+        Итог: фактическое изменение {{ '%+.2f'|format(fc.result_change_pct) }}%
+        (цена {{ fc.result_price }} ₽). Прогноз
+        <b>{{ 'сбылся' if fc.status=='success' else 'не сбылся' }}</b>.
+    </div>
+    {% endif %}
+</div>
+
+{% if chart_json and chart_json != 'null' %}
+<div class="panel">
+    <h2>График и разметка</h2>
+    <div class="chart-box"><canvas id="priceChart" height="130"></canvas></div>
+    <p class="muted" style="font-size:13px;margin:2px 0 0">
+        На графике отмечены: <span style="color:#5b8cff">линия тренда</span>,
+        уровни <span style="color:#2fd98a">поддержки</span> /
+        <span style="color:#ff6b81">сопротивления</span>, точки вершин и впадин,
+        а также <span style="color:#b3a7ff">зона фигуры</span> (если найдена).
+    </p>
+    <div class="grid grid--2">
+        <div class="chart-box"><canvas id="rsiChart" height="90"></canvas></div>
+        <div class="chart-box"><canvas id="macdChart" height="90"></canvas></div>
+    </div>
+</div>
+{% endif %}
+
+<div class="panel">
+    <h2>Что мы видим на графике (разметка по правилам теханализа)</h2>
+    {% if fc.patterns %}
+        {% for p in fc.patterns %}
+        <div class="pattern pattern--{{ p.type }}">
+            <div class="nm">{{ p.name }}</div>
+            <div class="muted">{{ p.explain }}</div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="muted">Чётких фигур не обнаружено — рынок без выраженной структуры.</p>
+    {% endif %}
+</div>
+
+<div class="panel">
+    <h2>Индикаторы</h2>
+    <div class="ind-grid">
+        {% set ind = fc.indicators %}
+        <div class="ind"><div class="k">RSI (14)</div><div class="v">{{ ind.rsi }}</div></div>
+        <div class="ind"><div class="k">MACD гистограмма</div><div class="v">{{ ind.macd_hist }}</div></div>
+        <div class="ind"><div class="k">SMA 20</div><div class="v">{{ ind.sma20 }}</div></div>
+        <div class="ind"><div class="k">SMA 50</div><div class="v">{{ ind.sma50 }}</div></div>
+        <div class="ind"><div class="k">Поддержка</div><div class="v">{{ ind.support }}</div></div>
+        <div class="ind"><div class="k">Сопротивление</div><div class="v">{{ ind.resistance }}</div></div>
+        <div class="ind"><div class="k">Импульс 10д</div><div class="v">{{ ind.momentum10 }}%</div></div>
+    </div>
+</div>
+
+<div class="panel">
+    <h2>Прогноз и обоснование</h2>
+    <div class="summary">{{ fc.summary_text }}</div>
+    <p class="disclaimer" style="margin-top:16px">{{ DISCLAIMER }}</p>
+</div>
+
+<div style="margin:18px 0">
+    <a href="{{ url_for('dashboard') }}" class="btn btn--ghost">← Новый прогноз</a>
+    <a href="{{ url_for('history') }}" class="btn btn--ghost">История прогнозов</a>
+</div>
+
+{% if chart_json and chart_json != 'null' %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script>
+const C = {{ chart_json|safe }};
+const grid = {color:'#27374f'}, tick = {color:'#93a4bd'};
+
+// плагин аннотаций может регистрироваться сам; на всякий случай регистрируем явно
+try { Chart.register(window['chartjs-plugin-annotation']); } catch(e) {}
+
+// строим разметку фигур поверх графика цены
+function buildAnnotations(markup){
+  const ann = {};
+  (markup||[]).forEach((m, i) => {
+    const k = 'm'+i;
+    const lbl = (content, pos, bg) => ({display: !!content, content: content,
+        position: pos, backgroundColor: bg || (m.color+'cc'), color:'#06121f',
+        font:{size:10, weight:'600'}, padding:3, borderRadius:4});
+    if (m.type === 'hline'){
+      ann[k] = {type:'line', yMin:m.y, yMax:m.y, borderColor:m.color,
+                borderWidth:1.5, borderDash:[6,5], label: lbl(m.label,'start')};
+    } else if (m.type === 'vline'){
+      ann[k] = {type:'line', xMin:m.x, xMax:m.x, borderColor:m.color,
+                borderWidth:1.5, borderDash:[4,4], label: lbl(m.label,'start')};
+    } else if (m.type === 'line'){
+      ann[k] = {type:'line', xMin:m.x1, xMax:m.x2, yMin:m.y1, yMax:m.y2,
+                borderColor:m.color, borderWidth:2, label: lbl(m.label,'end')};
+    } else if (m.type === 'point'){
+      ann[k] = {type:'point', xValue:m.x, yValue:m.y, radius:5,
+                backgroundColor:m.color, borderColor:'#fff', borderWidth:1.5};
+    } else if (m.type === 'box'){
+      ann[k] = {type:'box', xMin:m.x1, xMax:m.x2,
+                backgroundColor:m.color+'1f', borderColor:m.color+'66', borderWidth:1,
+                label:{display:!!m.label, content:m.label, position:{x:'center',y:'start'},
+                       color:m.color, font:{size:11, weight:'700'}}};
+    }
+  });
+  return ann;
+}
+
+new Chart(document.getElementById('priceChart'), {
+  type:'line',
+  data:{labels:C.dates, datasets:[
+    {label:'Цена', data:C.close, borderColor:'#5b8cff', borderWidth:2, pointRadius:0, tension:.15},
+    {label:'SMA20', data:C.sma20, borderColor:'#2fd98a', borderWidth:1, pointRadius:0},
+    {label:'SMA50', data:C.sma50, borderColor:'#f5b14c', borderWidth:1, pointRadius:0},
+    {label:'Bollinger ↑', data:C.bb_upper, borderColor:'#3a4d6e', borderWidth:1, pointRadius:0, borderDash:[4,4]},
+    {label:'Bollinger ↓', data:C.bb_lower, borderColor:'#3a4d6e', borderWidth:1, pointRadius:0, borderDash:[4,4]},
+  ]},
+  options:{plugins:{legend:{labels:{color:'#e6edf6'}},
+      annotation:{annotations: buildAnnotations(C.markup)}},
+    scales:{x:{ticks:tick,grid},y:{ticks:tick,grid}}}
+});
+
+new Chart(document.getElementById('rsiChart'), {
+  type:'line',
+  data:{labels:C.dates, datasets:[
+    {label:'RSI', data:C.rsi, borderColor:'#b07cff', borderWidth:2, pointRadius:0}]},
+  options:{plugins:{legend:{labels:{color:'#e6edf6'}}},
+    scales:{x:{ticks:tick,grid},y:{min:0,max:100,ticks:tick,grid}}}
+});
+
+new Chart(document.getElementById('macdChart'), {
+  type:'bar',
+  data:{labels:C.dates, datasets:[
+    {label:'MACD гистограмма', data:C.macd_hist,
+     backgroundColor:C.macd_hist.map(v => (v||0) >= 0 ? '#39d98a' : '#ff6b6b')}]},
+  options:{plugins:{legend:{labels:{color:'#e6edf6'}}},
+    scales:{x:{ticks:tick,grid},y:{ticks:tick,grid}}}
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}ТехАнализ — учись читать графики{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <span class="eyebrow">Обучение · акции Мосбиржи · ИИ-прогнозы</span>
+    <h1>Научись <span class="grad">техническому анализу</span><br>на реальных данных рынка</h1>
+    <p>Выбери акцию Московской биржи и период прогноза — получи разбор графика
+       по правилам теханализа: фигуры, RSI, MACD и понятный прогноз с вероятностью.</p>
+    <a href="{{ url_for('register') }}" class="btn btn--lg">Начать бесплатно →</a>
+    <a href="{{ url_for('textbook') }}" class="btn btn--lg btn--ghost">Открыть учебник</a>
+</section>
+
+<div class="panel">
+    <h2>Акции для прогноза</h2>
+    <div class="choices">
+        {% for s in stocks %}
+        <div class="choice">
+            <label><span class="tk">{{ s.ticker }}</span><span class="nm">{{ s.name }}</span></label>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="grid grid--3">
+    <div class="panel feature">
+        <span class="ico">📊</span>
+        <h3>Разметка графика</h3>
+        <p class="muted">Автоматически находим тренды, уровни поддержки/сопротивления
+           и фигуры — и объясняем простым языком, что видим.</p>
+    </div>
+    <div class="panel feature">
+        <span class="ico">🤖</span>
+        <h3>Прогноз с вероятностью</h3>
+        <p class="muted">Модель, обученная на истории Мосбиржи, учитывает индикаторы
+           и фигуры и оценивает поведение акции на горизонте прогноза.</p>
+    </div>
+    <div class="panel feature">
+        <span class="ico">📒</span>
+        <h3>История и дневник</h3>
+        <p class="muted">Все прогнозы сохраняются со статусом «сбылся / не сбылся»,
+           а дневник инвестора помогает разбирать свои сделки.</p>
+    </div>
+</div>
+{% endblock %}

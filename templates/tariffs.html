@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Тарифы — ТехАнализ{% endblock %}
+
+{% block content %}
+<h1>Тарифы</h1>
+<p class="muted">Лимит на количество прогнозов в день зависит от тарифа.
+   Оплата в демо-режиме не взимается — тариф переключается мгновенно.</p>
+
+<div class="grid grid--3">
+    {% for key, t in TARIFFS.items() %}
+    <div class="panel tariff-card {{ 'current' if key == current }}">
+        <h2>{{ t.label }}</h2>
+        <div class="price">{{ t.price }} ₽<small>/мес</small></div>
+        <div class="muted">Лимит: <b>{{ t.daily_limit }}</b> прогн./день</div>
+        <ul>
+            {% for f in t.features %}<li>{{ f }}</li>{% endfor %}
+        </ul>
+        {% if key == current %}
+            <button class="btn btn--block" disabled>Текущий тариф</button>
+        {% else %}
+            <form method="post" action="{{ url_for('select_tariff') }}">
+                <input type="hidden" name="tariff" value="{{ key }}">
+                <button class="btn btn--block" type="submit">Перейти</button>
+            </form>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Новый прогноз — ТехАнализ{% endblock %}
+
+{% block content %}
+<div class="stat-row">
+    <div class="stat">
+        <div class="k">Тариф</div>
+        <div class="v">{{ TARIFFS[current_user.tariff].label }}</div>
+    </div>
+    <div class="stat">
+        <div class="k">Прогнозов сегодня</div>
+        <div class="v">{{ used }}/{{ limit }}</div>
+    </div>
+    <div class="stat">
+        <div class="k">Осталось</div>
+        <div class="v">{{ remaining }}</div>
+    </div>
+</div>
+
+<form method="post" action="{{ url_for('make_forecast') }}" class="panel">
+    <h2>1. Выберите акцию</h2>
+    <div class="choices">
+        {% for s in stocks %}
+        <div class="choice">
+            <input type="radio" name="ticker" id="t_{{ s.ticker }}" value="{{ s.ticker }}"
+                   {% if loop.first %}checked{% endif %}>
+            <label for="t_{{ s.ticker }}">
+                <span class="tk">{{ s.ticker }}</span><br>
+                <span class="nm">{{ s.name }}</span>
+            </label>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h2 style="margin-top:24px">2. Выберите период прогноза</h2>
+    <div class="choices">
+        {% for key, p in periods.items() %}
+        <div class="choice">
+            <input type="radio" name="period" id="p_{{ key }}" value="{{ key }}"
+                   {% if loop.first %}checked{% endif %}>
+            <label for="p_{{ key }}">
+                <span class="tk">{{ p.label }}</span>
+                <div class="desc">{{ p.desc }}</div>
+            </label>
+        </div>
+        {% endfor %}
+    </div>
+
+    <br>
+    {% if remaining > 0 %}
+        <button class="btn btn--lg" type="submit">Построить прогноз</button>
+    {% else %}
+        <p class="flash flash--info">Дневной лимит исчерпан. Возвращайтесь завтра
+            или <a href="{{ url_for('tariffs') }}">смените тариф</a>.</p>
+    {% endif %}
+    <p class="disclaimer" style="margin-top:14px">{{ DISCLAIMER }}</p>
+</form>
+
+{% if recent %}
+<div class="panel">
+    <h3>Последние прогнозы</h3>
+    <table>
+        <tr><th>Дата</th><th>Акция</th><th>Период</th><th>Прогноз</th><th>Статус</th><th></th></tr>
+        {% for f in recent %}
+        <tr>
+            <td>{{ f.created_at.strftime('%d.%m.%Y') }}</td>
+            <td>{{ f.ticker }}</td>
+            <td>{{ periods[f.period].label }}</td>
+            <td>
+                <span class="badge badge--{{ f.direction }}">
+                    {{ '%+.2f'|format(f.predicted_change_pct) }}%
+                </span>
+            </td>
+            <td><span class="badge badge--{{ f.status }}">{{ f.status_label }}</span></td>
+            <td><a href="{{ url_for('forecast_detail', fc_id=f.id) }}">открыть</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endif %}
+{% endblock %}

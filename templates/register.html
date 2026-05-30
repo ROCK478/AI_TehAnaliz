@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Регистрация — ТехАнализ{% endblock %}
+
+{% block content %}
+<div class="panel form-narrow">
+    <h2>Регистрация</h2>
+    <form method="post">
+        <label>E-mail</label>
+        <input type="email" name="email" value="{{ email or '' }}" required>
+
+        <label>Пароль (от 6 символов)</label>
+        <input type="password" name="password" required>
+
+        <label>Повторите пароль</label>
+        <input type="password" name="password2" required>
+
+        <div class="checkbox-row">
+            <input type="checkbox" name="accept_privacy" id="acc" required>
+            <label for="acc" style="margin:0">Я принимаю
+                <a href="{{ url_for('privacy') }}" target="_blank">политику конфиденциальности</a>
+                и согласен с обработкой персональных данных.</label>
+        </div>
+
+        <br>
+        <button class="btn btn--block" type="submit">Создать аккаунт</button>
+    </form>
+    <p class="muted" style="margin-top:14px">Уже есть аккаунт?
+        <a href="{{ url_for('login') }}">Войти</a></p>
+    <p class="disclaimer" style="margin-top:10px">{{ DISCLAIMER }}</p>
+</div>
+{% endblock %}
+{% block risk %}{% endblock %}

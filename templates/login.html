@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Вход — ТехАнализ{% endblock %}
+
+{% block content %}
+<div class="panel form-narrow">
+    <h2>Вход</h2>
+    <form method="post">
+        <label>E-mail</label>
+        <input type="email" name="email" required>
+        <label>Пароль</label>
+        <input type="password" name="password" required>
+        <br><br>
+        <button class="btn btn--block" type="submit">Войти</button>
+    </form>
+    <p class="muted" style="margin-top:14px">Нет аккаунта?
+        <a href="{{ url_for('register') }}">Зарегистрироваться</a></p>
+</div>
+{% endblock %}
+{% block risk %}{% endblock %}

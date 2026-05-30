@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ n.title }} — Новости{% endblock %}
+
+{% block content %}
+<div class="article">
+    <a href="{{ url_for('news') }}" class="back-link">← Все новости</a>
+    <div class="article__meta">
+        <span class="badge badge--tag">{{ n.tag }}</span>
+        <span class="muted">{{ n.date }} · {{ n.source }}</span>
+    </div>
+    <h1 class="article__title">{{ n.title }}</h1>
+    <p class="article__lead">{{ n.summary }}</p>
+
+    <div class="article__body">
+        {% for para in n.body %}
+        <p>{{ para }}</p>
+        {% endfor %}
+    </div>
+
+    <p class="disclaimer" style="margin-top:24px">{{ DISCLAIMER }}</p>
+</div>
+{% endblock %}

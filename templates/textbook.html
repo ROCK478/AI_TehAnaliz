@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Учебник по теханализу — ТехАнализ{% endblock %}
+
+{% block content %}
+<h1>Учебник по техническому анализу</h1>
+<p class="muted">Короткие главы, чтобы понимать, что показывают прогнозы.</p>
+
+<div class="panel">
+    <b>Содержание:</b>
+    {% for l in lessons %}<a href="#{{ l.id }}" style="margin-right:14px">{{ l.title }}</a>{% endfor %}
+</div>
+
+{% for l in lessons %}
+<div class="panel" id="{{ l.id }}">
+    <h2>{{ loop.index }}. {{ l.title }}</h2>
+    <p>{{ l.body }}</p>
+</div>
+{% endfor %}
+
+<p class="disclaimer">{{ DISCLAIMER }}</p>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Новости рынка — ТехАнализ{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h1>Новости рынка</h1>
+    <p class="muted">Демо-лента. В боевой версии сюда подключается реальный источник
+       (RSS Мосбиржи / агрегатор) — структура шаблонов уже готова.</p>
+</div>
+
+<div class="news-list">
+{% for n in news %}
+    <a class="news-card" href="{{ url_for('news_detail', news_id=n.id) }}">
+        <div class="news-card__top">
+            <span class="badge badge--tag">{{ n.tag }}</span>
+            <span class="muted news-card__date">{{ n.date }}</span>
+        </div>
+        <h3 class="news-card__title">{{ n.title }}</h3>
+        <p class="muted">{{ n.summary }}</p>
+        <span class="news-card__more">Читать подробнее →</span>
+    </a>
+{% endfor %}
+</div>
+{% endblock %}

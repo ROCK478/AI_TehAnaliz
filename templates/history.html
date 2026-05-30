@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}История прогнозов — ТехАнализ{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <h1>История прогнозов</h1>
+    <form method="post" action="{{ url_for('refresh_history') }}">
+        <button class="btn btn--ghost" type="submit">Проверить исполнение</button>
+    </form>
+</div>
+
+<div class="stat-row">
+    <div class="stat"><div class="k">Всего</div><div class="v">{{ stats.total }}</div></div>
+    <div class="stat"><div class="k">Сбылись</div><div class="v" style="color:var(--up)">{{ stats.success }}</div></div>
+    <div class="stat"><div class="k">Не сбылись</div><div class="v" style="color:var(--down)">{{ stats.fail }}</div></div>
+    <div class="stat"><div class="k">Ожидают</div><div class="v">{{ stats.awaiting }}</div></div>
+    <div class="stat"><div class="k">Точность</div>
+        <div class="v">{{ stats.accuracy ~ '%' if stats.accuracy is not none else '—' }}</div></div>
+</div>
+
+<div class="panel">
+{% if forecasts %}
+    <table>
+        <tr>
+            <th>Дата</th><th>Акция</th><th>Период</th><th>Прогноз</th>
+            <th>Вероятн.</th><th>Срок до</th><th>Факт</th><th>Статус</th><th></th>
+        </tr>
+        {% for f in forecasts %}
+        <tr>
+            <td>{{ f.created_at.strftime('%d.%m.%Y') }}</td>
+            <td><b>{{ f.ticker }}</b><br><span class="muted">{{ stock_name(f.ticker) }}</span></td>
+            <td>{{ {'short':'Кратк.','medium':'Средн.','long':'Долгоср.'}[f.period] }}</td>
+            <td><span class="badge badge--{{ f.direction }}">{{ '%+.2f'|format(f.predicted_change_pct) }}%</span></td>
+            <td>{{ f.probability }}%</td>
+            <td>{{ f.target_date.strftime('%d.%m.%Y') }}</td>
+            <td>{{ ('%+.2f'|format(f.result_change_pct)) ~ '%' if f.result_change_pct is not none else '—' }}</td>
+            <td><span class="badge badge--{{ f.status }}">{{ f.status_label }}</span></td>
+            <td><a href="{{ url_for('forecast_detail', fc_id=f.id) }}">детали</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p class="muted">Прогнозов пока нет. <a href="{{ url_for('dashboard') }}">Создайте первый</a>.</p>
+{% endif %}
+</div>
+{% endblock %}
