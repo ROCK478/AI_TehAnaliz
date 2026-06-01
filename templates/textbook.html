@@ -2,20 +2,492 @@
 {% block title %}Учебник по теханализу — ТехАнализ{% endblock %}
 
 {% block content %}
-<h1>Учебник по техническому анализу</h1>
-<p class="muted">Короткие главы, чтобы понимать, что показывают прогнозы.</p>
+<style>
+    .textbook-layout {
+        display: flex;
+        gap: 32px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    /* Левая панель с оглавлением */
+    .sidebar {
+        width: 300px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        background: var(--panel);
+        backdrop-filter: blur(6px);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 20px;
+    }
+    
+    .sidebar-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--line);
+    }
+    
+    .sidebar-module {
+        margin-bottom: 24px;
+    }
+    
+    .module-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--accent);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .sidebar-lessons {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .sidebar-lesson {
+        padding: 10px 12px;
+        margin-bottom: 4px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 14px;
+        color: var(--muted);
+    }
+    
+    .sidebar-lesson:hover {
+        background: rgba(91, 140, 255, 0.1);
+        color: var(--text);
+    }
+    
+    .sidebar-lesson.active {
+        background: linear-gradient(135deg, rgba(91, 140, 255, 0.15), rgba(123, 107, 255, 0.1));
+        color: var(--accent);
+        border-left: 3px solid var(--accent);
+    }
+    
+    /* Центральная область */
+    .lesson-content-area {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .lesson-card {
+        background: var(--panel);
+        backdrop-filter: blur(6px);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: 40px;
+    }
+    
+    .lesson-emoji {
+        font-size: 48px;
+        margin-bottom: 16px;
+    }
+    
+    .lesson-card h1 {
+        font-size: 32px;
+        margin-bottom: 12px;
+    }
+    
+    .lesson-tag {
+        display: inline-block;
+        background: rgba(91, 140, 255, 0.15);
+        color: var(--accent);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        margin-bottom: 24px;
+    }
+    
+    .lesson-content {
+        line-height: 1.7;
+    }
+    
+    .lesson-content h2 {
+        margin: 28px 0 12px 0;
+        font-size: 22px;
+    }
+    
+    .lesson-content h3 {
+        margin: 20px 0 10px 0;
+        font-size: 18px;
+        color: var(--accent);
+    }
+    
+    .lesson-content p {
+        margin: 16px 0;
+    }
+    
+    .lesson-content ul, .lesson-content ol {
+        padding-left: 24px;
+        margin: 16px 0;
+    }
+    
+    .lesson-content li {
+        margin: 8px 0;
+    }
+    
+    .info-box {
+        background: rgba(91, 140, 255, 0.08);
+        border-left: 3px solid var(--accent);
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin: 24px 0;
+    }
+    
+    .warning-box {
+        background: rgba(255, 107, 129, 0.08);
+        border-left: 3px solid var(--down);
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin: 24px 0;
+    }
+    
+    /* Рисунки теперь внизу */
+    .pattern-diagram {
+        background: var(--bg);
+        border-radius: 20px;
+        padding: 24px;
+        margin: 32px 0 16px 0;
+        text-align: center;
+        border: 1px solid var(--line-strong);
+    }
+    
+    .pattern-diagram svg {
+        max-width: 100%;
+        height: auto;
+        border-radius: 12px;
+    }
+    
+    .pattern-caption {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--muted);
+        text-align: center;
+    }
+    
+    .indicator-chart {
+        background: var(--bg);
+        border-radius: 20px;
+        padding: 20px;
+        margin: 32px 0 16px 0;
+    }
+    
+    .two-columns {
+        display: flex;
+        gap: 24px;
+        margin: 32px 0 16px 0;
+        flex-wrap: wrap;
+    }
+    
+    .two-columns > div {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .nav-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 48px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+    }
+    
+    .nav-btn {
+        background: transparent;
+        border: 1px solid var(--line-strong);
+        border-radius: 12px;
+        padding: 10px 20px;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .nav-btn:hover:not(:disabled) {
+        border-color: var(--accent);
+        background: rgba(91, 140, 255, 0.1);
+    }
+    
+    .nav-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+    
+    @media (max-width: 768px) {
+        .textbook-layout {
+            flex-direction: column;
+        }
+        .sidebar {
+            width: 100%;
+            position: static;
+            max-height: none;
+        }
+        .lesson-card {
+            padding: 24px;
+        }
+    }
+</style>
 
-<div class="panel">
-    <b>Содержание:</b>
-    {% for l in lessons %}<a href="#{{ l.id }}" style="margin-right:14px">{{ l.title }}</a>{% endfor %}
+<div class="textbook-layout">
+    <!-- Левое меню -->
+    <div class="sidebar">
+        <div class="sidebar-title">📚 Содержание</div>
+        
+        <div class="sidebar-module">
+            <div class="module-name">📊 Основы теханализа</div>
+            <ul class="sidebar-lessons">
+                <li class="sidebar-lesson" data-lesson="trend">Что такое тренд?</li>
+                <li class="sidebar-lesson" data-lesson="support_resistance">Поддержка и сопротивление</li>
+                <li class="sidebar-lesson" data-lesson="volume">Анализ объёмов</li>
+            </ul>
+        </div>
+        
+        <div class="sidebar-module">
+            <div class="module-name">📈 Графические фигуры</div>
+            <ul class="sidebar-lessons">
+                <li class="sidebar-lesson" data-lesson="head_shoulders">Голова и плечи</li>
+                <li class="sidebar-lesson" data-lesson="double_top">Двойная вершина / двойное дно</li>
+                <li class="sidebar-lesson" data-lesson="triangles">Треугольники</li>
+                <li class="sidebar-lesson" data-lesson="flags">Флаги и вымпелы</li>
+            </ul>
+        </div>
+        
+        <div class="sidebar-module">
+            <div class="module-name">📐 Индикаторы</div>
+            <ul class="sidebar-lessons">
+                <li class="sidebar-lesson" data-lesson="rsi">RSI</li>
+                <li class="sidebar-lesson" data-lesson="macd">MACD</li>
+                <li class="sidebar-lesson" data-lesson="moving_averages">Скользящие средние</li>
+                <li class="sidebar-lesson" data-lesson="bollinger">Полосы Боллинджера</li>
+            </ul>
+        </div>
+        
+        <div class="sidebar-module">
+            <div class="module-name">🛡️ Риск-менеджмент</div>
+            <ul class="sidebar-lessons">
+                <li class="sidebar-lesson" data-lesson="risk_1_2">Правило 1-2%</li>
+                <li class="sidebar-lesson" data-lesson="stop_loss">Стоп-лосс и тейк-профит</li>
+                <li class="sidebar-lesson" data-lesson="psychology">Психология трейдинга</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Центральная область -->
+    <div class="lesson-content-area">
+        <div class="lesson-card" id="lessonContent"></div>
+    </div>
 </div>
 
-{% for l in lessons %}
-<div class="panel" id="{{ l.id }}">
-    <h2>{{ loop.index }}. {{ l.title }}</h2>
-    <p>{{ l.body }}</p>
-</div>
-{% endfor %}
-
-<p class="disclaimer">{{ DISCLAIMER }}</p>
+<script>
+    // SVG рисунки (вынесены в конец каждого урока)
+    function getTrendSVG() {
+        return `<div class="pattern-diagram">
+            <svg width="500" height="250" viewBox="0 0 500 250" xmlns="http://www.w3.org/2000/svg">
+                <rect width="500" height="250" fill="#0e1525" rx="12"/>
+                <line x1="40" y1="200" x2="460" y2="200" stroke="#2a3a55" stroke-width="1"/>
+                <line x1="40" y1="150" x2="460" y2="150" stroke="#2a3a55" stroke-width="1" stroke-dasharray="4"/>
+                <line x1="40" y1="100" x2="460" y2="100" stroke="#2a3a55" stroke-width="1" stroke-dasharray="4"/>
+                <line x1="40" y1="50" x2="460" y2="50" stroke="#2a3a55" stroke-width="1"/>
+                <polyline points="50,180 100,160 150,170 200,140 250,150 300,120 350,130 400,100 450,110" 
+                    stroke="#2fd98a" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <text x="200" y="30" fill="#2fd98a" font-size="14" font-weight="bold" text-anchor="middle">Восходящий тренд</text>
+                <text x="250" y="230" fill="#64748b" font-size="12" text-anchor="middle">Время →</text>
+                <text x="15" y="125" fill="#64748b" font-size="12" text-anchor="middle" transform="rotate(-90,15,125)">Цена →</text>
+                <polygon points="460,108 450,103 450,113" fill="#2fd98a"/>
+            </svg>
+            <div class="pattern-caption">📈 На графике — пример восходящего тренда</div>
+        </div>`;
+    }
+    
+    function getHeadShouldersSVG() {
+        return `<div class="pattern-diagram">
+            <svg width="500" height="250" viewBox="0 0 500 250" xmlns="http://www.w3.org/2000/svg">
+                <rect width="500" height="250" fill="#0e1525" rx="12"/>
+                <polyline points="50,180 100,130 150,160 200,100 250,160 300,130 350,180 400,190 450,195" 
+                    stroke="#ff6b81" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <line x1="50" y1="190" x2="450" y2="190" stroke="#f5b14c" stroke-width="2" stroke-dasharray="6"/>
+                <text x="80" y="120" fill="#64748b" font-size="11" text-anchor="middle">Левое плечо</text>
+                <text x="200" y="85" fill="#64748b" font-size="11" text-anchor="middle">Голова</text>
+                <text x="310" y="120" fill="#64748b" font-size="11" text-anchor="middle">Правое плечо</text>
+                <text x="250" y="215" fill="#f5b14c" font-size="12" text-anchor="middle">Линия шеи</text>
+                <text x="250" y="235" fill="#ff6b81" font-size="13" text-anchor="middle">Голова и плечи (разворот вниз)</text>
+            </svg>
+            <div class="pattern-caption">📐 Классический паттерн разворота</div>
+        </div>`;
+    }
+    
+    function getDoubleTopSVG() {
+        return `<svg width="500" height="250" viewBox="0 0 500 250" xmlns="http://www.w3.org/2000/svg">
+                <rect width="500" height="250" fill="#0e1525" rx="12"/>
+                <polyline points="50,180 100,120 150,160 200,120 250,170 300,180 350,190 400,195 450,200" 
+                    stroke="#ff6b81" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <line x1="50" y1="165" x2="450" y2="165" stroke="#f5b14c" stroke-width="2" stroke-dasharray="6"/>
+                <text x="145" y="108" fill="#64748b" font-size="11" text-anchor="middle">Вершина 1</text>
+                <text x="220" y="108" fill="#64748b" font-size="11" text-anchor="middle">Вершина 2</text>
+                <text x="250" y="190" fill="#f5b14c" font-size="12" text-anchor="middle">Линия шеи</text>
+                <text x="250" y="235" fill="#ff6b81" font-size="13" text-anchor="middle">Двойная вершина</text>
+            </svg>`;
+    }
+    
+    function getDoubleBottomSVG() {
+        return `<svg width="500" height="250" viewBox="0 0 500 250" xmlns="http://www.w3.org/2000/svg">
+                <rect width="500" height="250" fill="#0e1525" rx="12"/>
+                <polyline points="50,120 100,180 150,140 200,180 250,130 300,120 350,110 400,105 450,100" 
+                    stroke="#2fd98a" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <line x1="50" y1="135" x2="450" y2="135" stroke="#f5b14c" stroke-width="2" stroke-dasharray="6"/>
+                <text x="145" y="195" fill="#64748b" font-size="11" text-anchor="middle">Дно 1</text>
+                <text x="220" y="195" fill="#64748b" font-size="11" text-anchor="middle">Дно 2</text>
+                <text x="250" y="125" fill="#f5b14c" font-size="12" text-anchor="middle">Линия шеи</text>
+                <text x="250" y="235" fill="#2fd98a" font-size="13" text-anchor="middle">Двойное дно</text>
+            </svg>`;
+    }
+    
+    function getTrianglesSVG() {
+        return `<div class="pattern-diagram">
+            <svg width="500" height="200" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+                <rect width="500" height="200" fill="#0e1525" rx="12"/>
+                <line x1="40" y1="160" x2="180" y2="160" stroke="#ff6b81" stroke-width="2"/>
+                <line x1="40" y1="120" x2="180" y2="140" stroke="#2fd98a" stroke-width="2"/>
+                <polygon points="40,160 180,160 180,140" fill="none" stroke="#f5b14c" stroke-width="1.5" stroke-dasharray="4"/>
+                <text x="110" y="185" fill="#f5b14c" font-size="11" text-anchor="middle">Восходящий ▲</text>
+                <line x1="260" y1="80" x2="400" y2="80" stroke="#ff6b81" stroke-width="2"/>
+                <line x1="260" y1="120" x2="400" y2="100" stroke="#2fd98a" stroke-width="2"/>
+                <polygon points="260,80 400,80 400,100" fill="none" stroke="#f5b14c" stroke-width="1.5" stroke-dasharray="4"/>
+                <text x="330" y="185" fill="#f5b14c" font-size="11" text-anchor="middle">Нисходящий ▼</text>
+            </svg>
+            <div class="pattern-caption">📐 Восходящий (слева) и нисходящий (справа) треугольники</div>
+        </div>`;
+    }
+    
+    function getRSISVG() {
+        return `<div class="indicator-chart">
+            <svg width="500" height="200" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+                <rect width="500" height="200" fill="#0e1525" rx="12"/>
+                <line x1="40" y1="40" x2="460" y2="40" stroke="#ff6b81" stroke-width="1.5" stroke-dasharray="4"/>
+                <line x1="40" y1="160" x2="460" y2="160" stroke="#2fd98a" stroke-width="1.5" stroke-dasharray="4"/>
+                <polyline points="50,120 100,80 150,100 200,50 250,70 300,40 350,60 400,90 450,110" 
+                    stroke="#b07cff" stroke-width="2.5" fill="none"/>
+                <text x="250" y="30" fill="#ff6b81" font-size="11" text-anchor="middle">Перекупленность (RSI > 70)</text>
+                <text x="250" y="180" fill="#2fd98a" font-size="11" text-anchor="middle">Перепроданность (RSI < 30)</text>
+                <text x="250" y="110" fill="#b07cff" font-size="12" text-anchor="middle">RSI</text>
+            </svg>
+            <div class="pattern-caption">📊 RSI помогает оценить перекупленность или перепроданность актива</div>
+        </div>`;
+    }
+    
+    function getMACDSVG() {
+        return `<div class="indicator-chart">
+            <svg width="500" height="200" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+                <rect width="500" height="200" fill="#0e1525" rx="12"/>
+                <line x1="40" y1="100" x2="460" y2="100" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4"/>
+                <polyline points="50,110 100,80 150,90 200,60 250,70 300,50 350,65 400,95 450,105" 
+                    stroke="#2fd98a" stroke-width="2" fill="none"/>
+                <polyline points="50,100 100,95 150,98 200,85 250,90 300,80 350,88 400,100 450,102" 
+                    stroke="#ff6b81" stroke-width="2" fill="none"/>
+                <rect x="55" y="105" width="8" height="5" fill="#2fd98a"/>
+                <rect x="65" y="95" width="8" height="15" fill="#2fd98a"/>
+                <rect x="75" y="98" width="8" height="10" fill="#2fd98a"/>
+                <rect x="85" y="85" width="8" height="25" fill="#2fd98a"/>
+                <rect x="95" y="90" width="8" height="20" fill="#2fd98a"/>
+                <rect x="105" y="80" width="8" height="30" fill="#2fd98a"/>
+                <rect x="115" y="88" width="8" height="22" fill="#ff6b81"/>
+                <text x="250" y="30" fill="#2fd98a" font-size="11" text-anchor="middle">MACD выше нуля → бычий импульс</text>
+                <text x="250" y="185" fill="#ff6b81" font-size="11" text-anchor="middle">MACD ниже нуля → медвежий импульс</text>
+            </svg>
+            <div class="pattern-caption">📊 MACD помогает определить силу и направление импульса</div>
+        </div>`;
+    }
+    
+    const lessonsData = {
+        trend: {
+            emoji: "📈", title: "Что такое тренд?", tag: "Основы",
+            content: `<h2>📊 Что такое тренд?</h2><p><strong>Тренд</strong> — это основное направление движения цены актива.</p><h3>⬆️ Восходящий тренд</h3><p>Цена формирует более высокие максимумы и минимумы. Рынок контролируют покупатели.</p><h3>⬇️ Нисходящий тренд</h3><p>Цена формирует более низкие максимумы и минимумы. Рынок контролируют продавцы.</p><h3>➡️ Боковой тренд (флэт)</h3><p>Цена движется в горизонтальном диапазоне.</p><div class="info-box">💡 «Тренд — твой друг». Торговать против тренда рискованно.</div>${getTrendSVG()}`
+        },
+        support_resistance: {
+            emoji: "🛡️", title: "Поддержка и сопротивление", tag: "Основы",
+            content: `<h2>🛡️ Поддержка</h2><p>Уровень, ниже которого цена с трудом опускается. Здесь много покупателей.</p><h2>⚔️ Сопротивление</h2><p>Уровень, выше которого цена с трудом поднимается. Здесь много продавцов.</p><h2>🎯 Как использовать</h2><ul><li>Уровни для стоп-лоссов и тейк-профитов</li><li>Пробой уровня с объёмом — сильный сигнал</li><li>При пробое поддержка становится сопротивлением</li></ul><div class="pattern-diagram">${getDoubleTopSVG()}<div class="pattern-caption">📊 Пример уровней сопротивления (вершины)</div></div>`
+        },
+        head_shoulders: {
+            emoji: "🗿", title: "Голова и плечи", tag: "Разворотный паттерн",
+            content: `<h2>🗿 Паттерн «Голова и плечи»</h2><p>Надёжный разворотный паттерн. Сигнализирует о смене восходящего тренда на нисходящий.</p><h3>📐 Структура:</h3><ul><li>Левое плечо — первый пик</li><li>Голова — самый высокий пик</li><li>Правое плечо — третий пик</li><li>Линия шеи — уровень поддержки</li></ul><h3>🎯 Сигнал:</h3><p>Пробой линии шеи вниз подтверждает разворот.</p><div class="warning-box">⚠️ Бывает перевёрнутая голова и плечи — разворот вверх.</div>${getHeadShouldersSVG()}`
+        },
+        double_top: {
+            emoji: "📉", title: "Двойная вершина / двойное дно", tag: "Разворотный паттерн",
+            content: `<div class="two-columns"><div><h2>📉 Двойная вершина</h2><p>Два пика на одном уровне → разворот вниз.</p>${getDoubleTopSVG()}</div><div><h2>📈 Двойное дно</h2><p>Две впадины на одном уровне → разворот вверх.</p>${getDoubleBottomSVG()}</div></div><h3>🎯 Как торговать?</h3><ul><li>Ждём пробоя линии шеи</li><li>Цель — расстояние от экстремума до линии шеи</li></ul>`
+        },
+        triangles: {
+            emoji: "🔺", title: "Треугольники", tag: "Паттерны продолжения",
+            content: `<h2>📐 Треугольники</h2><p>Цена движется внутри сужающегося диапазона. Сигнал продолжения тренда после пробоя.</p><h3>📊 Виды:</h3><ul><li><strong>Восходящий</strong> — горизонтальное сопротивление → бычий</li><li><strong>Нисходящий</strong> — горизонтальная поддержка → медвежий</li><li><strong>Симметричный</strong> — пробой в любую сторону</li></ul><div class="info-box">📈 Лучше входить после пробоя границы с подтверждением объёмом.</div>${getTrianglesSVG()}`
+        },
+        rsi: {
+            emoji: "📏", title: "Индикатор RSI", tag: "Осциллятор",
+            content: `<h2>📏 Что такое RSI?</h2><p>Измеряет скорость изменения цены (0–100).</p><h3>🔴 Интерпретация:</h3><ul><li>Выше 70 — перекупленность → коррекция вниз</li><li>Ниже 30 — перепроданность → отскок вверх</li></ul><h3>📊 Дивергенция</h3><p>Цена обновляет экстремум, а RSI нет → сильный сигнал разворота.</p><div class="warning-box">⚠️ В сильном тренде RSI может долго оставаться в экстремальных зонах.</div>${getRSISVG()}`
+        },
+        macd: {
+            emoji: "📊", title: "Индикатор MACD", tag: "Трендовый индикатор",
+            content: `<h2>📊 Что такое MACD?</h2><p>Показывает сходимость и расхождение скользящих средних.</p><h3>🔧 Составляющие:</h3><ul><li>Линия MACD — разница между EMA12 и EMA26</li><li>Сигнальная линия — EMA от MACD</li><li>Гистограмма — разница между линиями</li></ul><h3>📈 Сигналы:</h3><ul><li>Пересечение нуля снизу вверх → бычий</li><li>Пересечение нуля сверху вниз → медвежий</li><li>Дивергенция → разворот</li></ul>${getMACDSVG()}`
+        },
+        volume: { emoji: "📊", title: "Анализ объёмов", tag: "Основы", content: `<h2>📊 Объём торгов</h2><p>Подтверждает силу тренда.</p><ul><li>Высокий объём + рост = сильный бычий тренд</li><li>Высокий объём + падение = сильный медвежий тренд</li><li>Низкий объём = слабое движение, возможен разворот</li></ul>` },
+        flags: { emoji: "🚩", title: "Флаги и вымпелы", tag: "Паттерны продолжения", content: `<h2>🚩 Флаги и вымпелы</h2><p>Короткие консолидации после сильного движения.</p><ul><li><strong>Флагшток</strong> — резкое движение</li><li><strong>Флаг</strong> — боковая консолидация</li><li><strong>Вымпел</strong> — сужающаяся консолидация</li></ul><h3>🎯 Сигнал:</h3><p>Пробой в сторону флагштока — продолжение движения.</p>` },
+        moving_averages: { emoji: "📈", title: "Скользящие средние", tag: "Трендовый индикатор", content: `<h2>📈 Скользящие средние</h2><p>SMA и EMA сглаживают цену.</p><ul><li><strong>Золотой крест</strong> — быстрая SMA пересекает медленную снизу вверх → бычий сигнал</li><li><strong>Мёртвый крест</strong> — быстрая SMA пересекает медленную сверху вниз → медвежий сигнал</li></ul>` },
+        bollinger: { emoji: "📊", title: "Полосы Боллинджера", tag: "Волатильность", content: `<h2>📊 Полосы Боллинджера</h2><p>Индикатор волатильности: SMA20 ± 2 стандартных отклонения.</p><ul><li><strong>Сужение полос</strong> — низкая волатильность, возможен сильный рывок</li><li>Касание верхней полосы → перекупленность</li><li>Касание нижней полосы → перепроданность</li></ul><div class="info-box">📈 Цена может «идти по полосе» в сильном тренде — это не сигнал к развороту!</div>` },
+        risk_1_2: { emoji: "💰", title: "Правило 1-2%", tag: "Управление капиталом", content: `<h2>💰 Правило 1-2%</h2><p>Риск на одну сделку не должен превышать <strong>1-2% от депозита</strong>.</p><div class="info-box">🛡️ При депозите 100 000 ₽ — терять не более 1000–2000 ₽ за сделку.</div><div class="warning-box">Это правило защищает от разорения даже при серии убыточных сделок.</div>` },
+        stop_loss: { emoji: "🛑", title: "Стоп-лосс и тейк-профит", tag: "Управление капиталом", content: `<h2>🛑 Стоп-лосс</h2><p>Уровень автоматического закрытия сделки в убыток.</p><h2>🎯 Тейк-профит</h2><p>Уровень фиксации прибыли.</p><h3>⚡ Правила:</h3><ul><li>Определяйте уровни ДО входа</li><li>Соотношение риск/прибыль ≥ 1:2</li><li>Не переносите стоп-лосс в убыточную зону</li></ul>` },
+        psychology: { emoji: "🧠", title: "Психология трейдинга", tag: "Управление капиталом", content: `<h2>🧠 Эмоции — главный враг</h2><p>Страх, жадность, FOMO — причины потерь.</p><h3>❌ Ошибки:</h3><ul><li>Усреднение убытка</li><li>Пересиживание стоп-лосса</li><li>Овертрейдинг</li></ul><h3>✅ Решения:</h3><ul><li>Ведите дневник трейдера</li><li>Имейте план сделки</li><li>Соблюдайте риск-менеджмент</li></ul><div class="warning-box">📔 Дневник инвестора в этом приложении поможет вам анализировать свои сделки!</div>` }
+    };
+    
+    let currentLesson = "trend";
+    
+    function loadLesson(lessonId) {
+        const lesson = lessonsData[lessonId];
+        if (!lesson) return;
+        currentLesson = lessonId;
+        document.getElementById('lessonContent').innerHTML = `
+            <div class="lesson-emoji">${lesson.emoji}</div>
+            <h1>${lesson.title}</h1>
+            <div class="lesson-tag">${lesson.tag}</div>
+            <div class="lesson-content">${lesson.content}</div>
+            <div class="nav-buttons">
+                <button class="nav-btn" id="prevLessonBtn" ${!getPrevLesson(lessonId) ? 'disabled' : ''}>← Предыдущий урок</button>
+                <button class="nav-btn" id="nextLessonBtn" ${!getNextLesson(lessonId) ? 'disabled' : ''}>Следующий урок →</button>
+            </div>
+        `;
+        document.querySelectorAll('.sidebar-lesson').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.lesson === lessonId) item.classList.add('active');
+        });
+        const prev = document.getElementById('prevLessonBtn');
+        const next = document.getElementById('nextLessonBtn');
+        if (prev && !prev.disabled) prev.addEventListener('click', () => { const p = getPrevLesson(lessonId); if(p) loadLesson(p); });
+        if (next && !next.disabled) next.addEventListener('click', () => { const n = getNextLesson(lessonId); if(n) loadLesson(n); });
+    }
+    
+    function getPrevLesson(id) {
+        const order = ["trend","support_resistance","volume","head_shoulders","double_top","triangles","flags","rsi","macd","moving_averages","bollinger","risk_1_2","stop_loss","psychology"];
+        const idx = order.indexOf(id);
+        return idx > 0 ? order[idx-1] : null;
+    }
+    
+    function getNextLesson(id) {
+        const order = ["trend","support_resistance","volume","head_shoulders","double_top","triangles","flags","rsi","macd","moving_averages","bollinger","risk_1_2","stop_loss","psychology"];
+        const idx = order.indexOf(id);
+        return idx < order.length-1 ? order[idx+1] : null;
+    }
+    
+    document.querySelectorAll('.sidebar-lesson').forEach(item => {
+        item.addEventListener('click', () => { if(item.dataset.lesson) loadLesson(item.dataset.lesson); });
+    });
+    
+    loadLesson("trend");
+</script>
 {% endblock %}
