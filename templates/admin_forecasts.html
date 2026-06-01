@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Админ — Прогнозы · ТехАнализ{% endblock %}
+
+{% block content %}
+<div class="admin-wrap">
+    {% include "admin_nav.html" %}
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <h1 style="margin:0">Прогнозы</h1>
+        <form method="get" style="display:flex;gap:8px;flex-wrap:wrap">
+            <select name="ticker" class="admin-select">
+                <option value="">Все тикеры</option>
+                {% for t in tickers %}
+                <option value="{{ t }}" {% if ticker_filter == t %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+            <select name="status" class="admin-select">
+                <option value="">Все статусы</option>
+                <option value="awaiting" {% if status_filter == 'awaiting' %}selected{% endif %}>Ожидает</option>
+                <option value="success" {% if status_filter == 'success' %}selected{% endif %}>Сбылся</option>
+                <option value="fail" {% if status_filter == 'fail' %}selected{% endif %}>Не сбылся</option>
+            </select>
+            <button type="submit" class="btn btn--sm">Фильтр</button>
+            {% if ticker_filter or status_filter %}
+            <a href="{{ url_for('admin_forecasts') }}" class="btn btn--sm btn--ghost">Сброс</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="panel" style="padding:0;overflow:hidden">
+        <table class="admin-table admin-table--full">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Пользователь</th>
+                    <th>Тикер</th>
+                    <th>Период</th>
+                    <th>Направление</th>
+                    <th>Изм.%</th>
+                    <th>Вер-ть</th>
+                    <th>Статус</th>
+                    <th>Дата прогноза</th>
+                    <th>Дата цели</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for fc in forecasts %}
+            <tr>
+                <td class="faint">#{{ fc.id }}</td>
+                <td>{{ fc.user.email }}</td>
+                <td><b>{{ fc.ticker }}</b></td>
+                <td class="muted">{{ fc.period }}</td>
+                <td>
+                    <span class="dir dir--{{ fc.direction }}">
+                        {% if fc.direction == 'up' %}↑ Рост
+                        {% elif fc.direction == 'down' %}↓ Падение
+                        {% else %}→ Флэт{% endif %}
+                    </span>
+                </td>
+                <td class="{% if fc.predicted_change_pct > 0 %}up{% elif fc.predicted_change_pct < 0 %}down{% endif %}">
+                    {{ '%+.1f' % fc.predicted_change_pct }}%
+                </td>
+                <td class="muted">{{ fc.probability | int }}%</td>
+                <td><span class="status status--{{ fc.status }}">{{ fc.status_label }}</span></td>
+                <td class="muted">{{ fc.created_at.strftime('%d.%m.%Y') if fc.created_at else '—' }}</td>
+                <td class="muted">{{ fc.target_date.strftime('%d.%m.%Y') if fc.target_date else '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="10" class="muted" style="text-align:center;padding:24px">Прогнозы не найдены</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="muted" style="font-size:13px">Показано: {{ forecasts | length }} (макс. 200)</p>
+</div>
+{% endblock %}

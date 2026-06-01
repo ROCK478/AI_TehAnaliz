@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Админ — Главная · ТехАнализ{% endblock %}
+
+{% block content %}
+<div class="admin-wrap">
+    {% include "admin_nav.html" %}
+
+    <h1>Обзор платформы</h1>
+
+    <div class="grid grid--4 admin-stats">
+        <div class="panel admin-stat">
+            <div class="admin-stat__val">{{ total_users }}</div>
+            <div class="admin-stat__label">Пользователей</div>
+        </div>
+        <div class="panel admin-stat">
+            <div class="admin-stat__val">{{ total_forecasts }}</div>
+            <div class="admin-stat__label">Всего прогнозов</div>
+        </div>
+        <div class="panel admin-stat admin-stat--up">
+            <div class="admin-stat__val">{{ success }}</div>
+            <div class="admin-stat__label">Успешных</div>
+        </div>
+        <div class="panel admin-stat admin-stat--acc">
+            <div class="admin-stat__val">{% if accuracy %}{{ accuracy }}%{% else %}—{% endif %}</div>
+            <div class="admin-stat__label">Точность</div>
+        </div>
+    </div>
+
+    <div class="grid grid--2" style="margin-top:0">
+        <div class="panel">
+            <h2>Тарифы</h2>
+            <table class="admin-table">
+                <thead><tr><th>Тариф</th><th>Пользователей</th></tr></thead>
+                <tbody>
+                {% for key, info in tariff_stats.items() %}
+                <tr>
+                    <td><span class="badge badge--{{ key }}">{{ info.label }}</span></td>
+                    <td>{{ info.count }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel">
+            <h2>Последние регистрации</h2>
+            <table class="admin-table">
+                <thead><tr><th>E-mail</th><th>Тариф</th><th>Дата</th></tr></thead>
+                <tbody>
+                {% for u in recent_users %}
+                <tr>
+                    <td>{{ u.email }}</td>
+                    <td><span class="badge badge--{{ u.tariff }}">{{ u.tariff }}</span></td>
+                    <td class="muted">{{ u.created_at.strftime('%d.%m.%Y') if u.created_at else '—' }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <a href="{{ url_for('admin_users') }}" class="btn btn--sm btn--ghost" style="margin-top:12px">Все пользователи →</a>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Последние прогнозы</h2>
+        <table class="admin-table">
+            <thead>
+                <tr><th>ID</th><th>Пользователь</th><th>Тикер</th><th>Период</th><th>Направление</th><th>Статус</th><th>Дата</th></tr>
+            </thead>
+            <tbody>
+            {% for fc in recent_forecasts %}
+            <tr>
+                <td class="faint">#{{ fc.id }}</td>
+                <td>{{ fc.user.email }}</td>
+                <td><b>{{ fc.ticker }}</b></td>
+                <td class="muted">{{ fc.period }}</td>
+                <td>
+                    <span class="dir dir--{{ fc.direction }}">
+                        {% if fc.direction == 'up' %}↑ Рост{% elif fc.direction == 'down' %}↓ Падение{% else %}→ Флэт{% endif %}
+                    </span>
+                </td>
+                <td><span class="status status--{{ fc.status }}">{{ fc.status_label }}</span></td>
+                <td class="muted">{{ fc.created_at.strftime('%d.%m %H:%M') if fc.created_at else '—' }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <a href="{{ url_for('admin_forecasts') }}" class="btn btn--sm btn--ghost" style="margin-top:12px">Все прогнозы →</a>
+    </div>
+</div>
+{% endblock %}

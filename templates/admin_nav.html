@@ -1,0 +1,5 @@
+<nav class="admin-subnav">
+    <a href="{{ url_for('admin_dashboard') }}" {% if request.endpoint == 'admin_dashboard' %}class="active"{% endif %}>Обзор</a>
+    <a href="{{ url_for('admin_users') }}" {% if request.endpoint == 'admin_users' %}class="active"{% endif %}>Пользователи</a>
+    <a href="{{ url_for('admin_forecasts') }}" {% if request.endpoint == 'admin_forecasts' %}class="active"{% endif %}>Прогнозы</a>
+</nav>

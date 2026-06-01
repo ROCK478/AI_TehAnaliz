@@ -22,6 +22,9 @@
                 <a href="{{ url_for('diary') }}">Дневник</a>
                 <a href="{{ url_for('tariffs') }}">Тарифы</a>
                 <span class="nav__tariff">{{ TARIFFS[current_user.tariff].label }}</span>
+                {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin_dashboard') }}" class="nav__admin">⚙ Админ</a>
+                {% endif %}
                 <a href="{{ url_for('logout') }}" class="nav__exit">Выйти</a>
             {% else %}
                 <a href="{{ url_for('textbook') }}">Учебник</a>

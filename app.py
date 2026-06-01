@@ -287,6 +287,129 @@ def register_routes(app):
             flash("Запись удалена.", "success")
         return redirect(url_for("diary"))
 
+    # ---------------------------------------------------------- admin panel
+    from functools import wraps
+
+    def admin_required(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            if not current_user.is_authenticated or not current_user.is_admin:
+                abort(403)
+            return f(*args, **kwargs)
+        return decorated
+
+    @app.route("/admin")
+    @login_required
+    @admin_required
+    def admin_dashboard():
+        total_users = User.query.count()
+        total_forecasts = Forecast.query.count()
+        success = Forecast.query.filter_by(status="success").count()
+        fail = Forecast.query.filter_by(status="fail").count()
+        done = success + fail
+        accuracy = round(success / done * 100, 1) if done else None
+
+        tariff_stats = {}
+        for key in TARIFFS:
+            tariff_stats[key] = {
+                "label": TARIFFS[key]["label"],
+                "count": User.query.filter_by(tariff=key).count(),
+            }
+
+        recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
+        recent_forecasts = (Forecast.query.order_by(Forecast.created_at.desc())
+                            .limit(10).all())
+
+        return render_template(
+            "admin_dashboard.html",
+            total_users=total_users,
+            total_forecasts=total_forecasts,
+            success=success, fail=fail,
+            accuracy=accuracy,
+            tariff_stats=tariff_stats,
+            recent_users=recent_users,
+            recent_forecasts=recent_forecasts,
+        )
+
+    @app.route("/admin/users")
+    @login_required
+    @admin_required
+    def admin_users():
+        q = request.args.get("q", "").strip()
+        query = User.query
+        if q:
+            query = query.filter(User.email.ilike(f"%{q}%"))
+        users = query.order_by(User.created_at.desc()).all()
+        return render_template("admin_users.html", users=users, tariffs=TARIFFS, q=q,
+                               stock_name=stock_name)
+
+    @app.route("/admin/users/<int:uid>/set-tariff", methods=["POST"])
+    @login_required
+    @admin_required
+    def admin_set_tariff(uid):
+        user = db.session.get(User, uid)
+        if not user:
+            abort(404)
+        tariff = request.form.get("tariff")
+        if tariff in TARIFFS:
+            user.tariff = tariff
+            db.session.commit()
+            flash(f"Тариф пользователя {user.email} изменён на «{TARIFFS[tariff]['label']}».", "success")
+        return redirect(url_for("admin_users"))
+
+    @app.route("/admin/users/<int:uid>/toggle-admin", methods=["POST"])
+    @login_required
+    @admin_required
+    def admin_toggle_admin(uid):
+        user = db.session.get(User, uid)
+        if not user:
+            abort(404)
+        if user.id == current_user.id:
+            flash("Нельзя изменить свои права администратора.", "error")
+            return redirect(url_for("admin_users"))
+        user.is_admin = not user.is_admin
+        db.session.commit()
+        status = "назначен администратором" if user.is_admin else "снят с должности администратора"
+        flash(f"Пользователь {user.email} {status}.", "success")
+        return redirect(url_for("admin_users"))
+
+    @app.route("/admin/users/<int:uid>/delete", methods=["POST"])
+    @login_required
+    @admin_required
+    def admin_delete_user(uid):
+        user = db.session.get(User, uid)
+        if not user:
+            abort(404)
+        if user.id == current_user.id:
+            flash("Нельзя удалить собственный аккаунт.", "error")
+            return redirect(url_for("admin_users"))
+        email = user.email
+        db.session.delete(user)
+        db.session.commit()
+        flash(f"Пользователь {email} удалён.", "success")
+        return redirect(url_for("admin_users"))
+
+    @app.route("/admin/forecasts")
+    @login_required
+    @admin_required
+    def admin_forecasts():
+        ticker_filter = request.args.get("ticker", "")
+        status_filter = request.args.get("status", "")
+        query = Forecast.query
+        if ticker_filter:
+            query = query.filter_by(ticker=ticker_filter)
+        if status_filter:
+            query = query.filter_by(status=status_filter)
+        forecasts = query.order_by(Forecast.created_at.desc()).limit(200).all()
+        return render_template(
+            "admin_forecasts.html",
+            forecasts=forecasts,
+            tickers=STOCK_TICKERS,
+            ticker_filter=ticker_filter,
+            status_filter=status_filter,
+            stock_name=stock_name,
+        )
+
 
 def evaluate_forecasts(user_id):
     """Проставляет статус (сбылся/не сбылся) прогнозам с наступившим сроком."""
@@ -407,6 +530,22 @@ TEXTBOOK = [
 
 
 app = create_app()
+
+
+@app.cli.command("make-admin")
+def make_admin_cmd():
+    """Назначить пользователя администратором: flask make-admin"""
+    import click
+    email = click.prompt("E-mail пользователя")
+    with app.app_context():
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            click.echo(f"Пользователь {email} не найден.")
+            return
+        user.is_admin = True
+        db.session.commit()
+        click.echo(f"Готово: {email} теперь администратор.")
+
 
 if __name__ == "__main__":
     import os
