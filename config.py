@@ -10,6 +10,9 @@ class Config:
         "DATABASE_URL", "sqlite:///" + os.path.join(BASE_DIR, "tehanaliz.db")
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Проверять при регистрации, что домен почты реально существует (DNS MX).
+    # Отключается переменной окружения EMAIL_CHECK_DELIVERABILITY=0 (нужно тестам без сети).
+    EMAIL_CHECK_DELIVERABILITY = os.environ.get("EMAIL_CHECK_DELIVERABILITY", "1") != "0"
 
 
 # ---- 5 акций Московской биржи, доступных для прогноза ----

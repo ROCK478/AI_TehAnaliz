@@ -67,6 +67,9 @@ a:hover{color:#8fb0ff}
     border:1px solid var(--line);border-radius:var(--radius);
     padding:24px;margin:18px 0;box-shadow:var(--shadow)}
 .panel h2:first-child,.panel h3:first-child,.panel h1:first-child{margin-top:0}
+/* записи дневника: длинный текст переносится и не вылезает за пределы панели */
+.entry-title{min-width:0;overflow-wrap:anywhere}
+.entry-body{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
 .grid{display:grid;gap:18px}
 .grid--3{grid-template-columns:repeat(3,1fr)}
 .grid--2{grid-template-columns:repeat(2,1fr)}

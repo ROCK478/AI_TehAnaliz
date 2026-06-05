@@ -8,6 +8,7 @@ import os
 import datetime
 
 os.environ["DATABASE_URL"] = "sqlite:///test_app.db"
+os.environ["EMAIL_CHECK_DELIVERABILITY"] = "0"  # без сети DNS-проверка домена недоступна
 
 from app import create_app, evaluate_forecasts  # noqa: E402
 from extensions import db                        # noqa: E402
@@ -22,9 +23,19 @@ def run():
     for url in ("/", "/textbook", "/privacy", "/login", "/register"):
         assert c.get(url).status_code == 200, f"GET {url}"
 
-    # регистрация
+    # регистрация: слабый пароль и некорректный e-mail должны отклоняться
     r = c.post("/register", data={"email": "a@b.com", "password": "secret1",
                                   "password2": "secret1", "accept_privacy": "on"},
+               follow_redirects=True)
+    assert "Пароль должен" in r.get_data(as_text=True), "слабый пароль прошёл"
+    r = c.post("/register", data={"email": "ff@ff", "password": "Secret#123",
+                                  "password2": "Secret#123", "accept_privacy": "on"},
+               follow_redirects=True)
+    assert "корректный e-mail" in r.get_data(as_text=True), "некорректный e-mail прошёл"
+
+    # регистрация с нормальными данными
+    r = c.post("/register", data={"email": "a@b.com", "password": "Secret#123",
+                                  "password2": "Secret#123", "accept_privacy": "on"},
                follow_redirects=True)
     assert r.status_code == 200
 

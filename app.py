@@ -5,7 +5,10 @@ Flask + Jinja + SQLAlchemy. Точка входа и все маршруты.
 """
 import json
 import random
+import re
 from datetime import date, timedelta
+
+from email_validator import validate_email, EmailNotValidError
 
 from flask import (Flask, render_template, request, redirect, url_for,
                    flash, abort)
@@ -18,6 +21,22 @@ from models import User, Forecast, DiaryEntry
 import moex
 import analysis
 import predictor
+
+
+def password_errors(password):
+    """Проверка сложности пароля. Возвращает список ошибок (пустой — пароль ок)."""
+    errs = []
+    if len(password) < 8:
+        errs.append("Пароль должен быть не короче 8 символов.")
+    if not re.search(r"[a-zа-яё]", password):
+        errs.append("Пароль должен содержать хотя бы одну строчную букву.")
+    if not re.search(r"[A-ZА-ЯЁ]", password):
+        errs.append("Пароль должен содержать хотя бы одну заглавную букву.")
+    if not re.search(r"\d", password):
+        errs.append("Пароль должен содержать хотя бы одну цифру.")
+    if not re.search(r"[^A-Za-zА-Яа-яЁё0-9\s]", password):
+        errs.append("Пароль должен содержать хотя бы один спецсимвол (например !, ?, #).")
+    return errs
 
 
 def create_app():
@@ -72,10 +91,18 @@ def register_routes(app):
             accepted = request.form.get("accept_privacy")
 
             errors = []
-            if "@" not in email or "." not in email:
-                errors.append("Введите корректный e-mail.")
-            if len(password) < 6:
-                errors.append("Пароль должен быть не короче 6 символов.")
+            try:
+                # Проверяем и формат адреса, и (если включено) что почтовый
+                # домен реально существует — есть DNS-записи MX/A.
+                valid = validate_email(
+                    email,
+                    check_deliverability=app.config["EMAIL_CHECK_DELIVERABILITY"],
+                )
+                email = valid.normalized
+            except EmailNotValidError:
+                errors.append("Введите корректный e-mail существующего "
+                              "почтового домена.")
+            errors.extend(password_errors(password))
             if password != password2:
                 errors.append("Пароли не совпадают.")
             if not accepted:

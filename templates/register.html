@@ -8,8 +8,8 @@
         <label>E-mail</label>
         <input type="email" name="email" value="{{ email or '' }}" required>
 
-        <label>Пароль (от 6 символов)</label>
-        <input type="password" name="password" required>
+        <label>Пароль (минимум 8 символов: заглавная и строчная буквы, цифра и спецсимвол)</label>
+        <input type="password" name="password" minlength="8" required>
 
         <label>Повторите пароль</label>
         <input type="password" name="password2" required>

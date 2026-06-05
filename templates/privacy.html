@@ -23,6 +23,14 @@
     <h3>4. Важная оговорка</h3>
     <p class="disclaimer">{{ DISCLAIMER }} Сервис носит образовательный характер и
        не предоставляет финансовых, брокерских или консультационных услуг.</p>
+
+    <br>
+    <!-- Страница обычно открывается в новой вкладке (target="_blank") — пробуем
+         закрыть её; если браузер не разрешает, возвращаемся назад или на главную. -->
+    <button class="btn" type="button"
+            onclick="window.close(); setTimeout(function(){ if (!window.closed) { if (history.length > 1) { history.back(); } else { window.location.href = '{{ url_for("index") }}'; } } }, 150);">
+        Закрыть
+    </button>
 </div>
 {% endblock %}
 {% block risk %}{% endblock %}

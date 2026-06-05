@@ -34,16 +34,17 @@
 {% for e in entries %}
 <div class="panel">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <h3 style="margin:0">{{ e.title }}
+        <h3 class="entry-title" style="margin:0">{{ e.title }}
             {% if e.ticker %}<span class="badge badge--awaiting">{{ e.ticker }}</span>{% endif %}
         </h3>
-        <form method="post" action="{{ url_for('delete_diary', entry_id=e.id) }}">
+        <form method="post" action="{{ url_for('delete_diary', entry_id=e.id) }}"
+              onsubmit="return confirm('Удалить запись «{{ e.title }}»? Это действие необратимо.');">
             <button class="btn btn--sm btn--ghost" type="submit">Удалить</button>
         </form>
     </div>
     <p class="muted">{{ e.created_at.strftime('%d.%m.%Y %H:%M') }}
         {% if e.emotion %}· эмоция: {{ e.emotion }}{% endif %}</p>
-    {% if e.body %}<p>{{ e.body }}</p>{% endif %}
+    {% if e.body %}<p class="entry-body">{{ e.body }}</p>{% endif %}
 </div>
 {% else %}
 <p class="muted">Записей пока нет.</p>
